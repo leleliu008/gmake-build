@@ -1,0 +1,32 @@
+name: manually build gmake for macos-arm64
+
+on:
+  workflow_dispatch:
+
+jobs:
+
+  macos-arm64:
+
+    runs-on: macos-12
+
+    strategy:
+      fail-fast: false
+      matrix:
+        target-version: ['11.0', '12.0', '13.0']
+
+    steps:
+      - run: brew uninstall go@1.17
+      - run: brew update
+      - run: brew install --overwrite python@3.10 python@3.11
+
+      - run: curl -LO https://raw.githubusercontent.com/leleliu008/xcpkg/master/xcpkg
+      - run: chmod a+x xcpkg
+      - run: ./xcpkg setup --use-brew
+      - run: ./xcpkg update
+      - run: ./xcpkg install MacOSX/${{ matrix.target-version }}/arm64/gmake --link-type=static-prefered --install-lib=static
+      - run: ./xcpkg pack    MacOSX/${{ matrix.target-version }}/arm64/gmake -o .
+
+      - uses: actions/upload-artifact@v3
+        with:
+          name: gmake-macos${{ matrix.target-version }}-arm64-tar-xz
+          path: gmake-macos*-arm64.tar.xz

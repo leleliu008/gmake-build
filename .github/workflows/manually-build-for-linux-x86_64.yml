@@ -1,0 +1,25 @@
+name: manually build gmake for linux-x86_64
+
+on:
+  workflow_dispatch:
+
+jobs:
+  linux-x86_64:
+
+    runs-on: ubuntu-latest
+
+    container: alpine:3.16
+
+    steps:
+      - run: wget https://raw.githubusercontent.com/leleliu008/ppkg/master/ppkg
+      - run: chmod a+x ppkg
+      - run: ./ppkg setup --use-system-package-manager
+      - run: ./ppkg update
+      - run: ./ppkg install gmake --link-type=static-only --install-lib=static
+      - run: ./ppkg pack    gmake
+      - run: cp ~/.ppkg/packed/gmake-*-linux-x86_64.tar.xz .
+
+      - uses: actions/upload-artifact@v3
+        with:
+          name: gmake---linux-x86_64-tar-xz
+          path: gmake-*-linux-x86_64.tar.xz

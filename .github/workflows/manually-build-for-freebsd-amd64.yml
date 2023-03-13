@@ -1,0 +1,34 @@
+name: manually build gmake for freebsd-amd64
+
+on:
+  workflow_dispatch:
+
+jobs:
+
+  freebsd-amd64:
+
+    runs-on: macos-12
+
+    steps:
+      - uses: leleliu008/github-actions-vagrant@main
+        with:
+          mem: 2048
+          box: generic/freebsd13
+          run: |
+            export HOME=/home/vagrant
+
+            run pkg install -y curl libnghttp2
+
+            run curl -LO https://raw.githubusercontent.com/leleliu008/ppkg/master/ppkg
+            run chmod a+x ppkg
+            run ./ppkg setup --use-system-package-manager
+            run ./ppkg update
+            run ./ppkg install gmake --link-type=static-only --install-lib=static
+            run ./ppkg pack    gmake
+
+      - run: scp -i $VAGRANT_CWD/.vagrant/machines/default/virtualbox/private_key -o StrictHostKeyChecking=no -r -P 2222 vagrant@127.0.0.1:/home/vagrant/.ppkg/packed/gmake-*-freebsd-amd64.tar.xz .
+
+      - uses: actions/upload-artifact@v3
+        with:
+          name: gmake---freebsd-amd64-tar-xz
+          path: gmake-*-freebsd-amd64.tar.xz
