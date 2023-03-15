@@ -28,5 +28,5 @@ jobs:
 
       - uses: actions/upload-artifact@v3
         with:
-          name: gmake-macos${{ matrix.target-version }}-x86_64-tar-xz
-          path: gmake-macos*-x86_64.tar.xz
+          name: gmake---macos${{ matrix.target-version }}-x86_64-tar-xz
+          path: gmake-*-macos*-x86_64.tar.xz
