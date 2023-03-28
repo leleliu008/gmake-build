@@ -84,7 +84,7 @@ jobs:
 
       - uses: actions/upload-artifact@v3
         with:
-          name: gmake-netbsd-amd64-tar-xz
+          name: gmake---netbsd-amd64-tar-xz
           path: gmake-*-netbsd-amd64.tar.xz
 
   openbsd-amd64:
@@ -119,7 +119,7 @@ jobs:
 
       - uses: actions/upload-artifact@v3
         with:
-          name: gmake-openbsd-amd64-tar-xz
+          name: gmake---openbsd-amd64-tar-xz
           path: gmake-*-openbsd-amd64.tar.xz
 
   freebsd-amd64:
@@ -149,7 +149,7 @@ jobs:
 
       - uses: actions/upload-artifact@v3
         with:
-          name: gmake-freebsd-amd64-tar-xz
+          name: gmake---freebsd-amd64-tar-xz
           path: gmake-*-freebsd-amd64.tar.xz
 
   macos:
@@ -178,8 +178,8 @@ jobs:
 
       - uses: actions/upload-artifact@v3
         with:
-          name: gmake-macos${{ matrix.target-version }}-${{ matrix.target-arch }}-tar-xz
-          path: gmake-*.tar.xz
+          name: gmake---macos${{ matrix.target-version }}-${{ matrix.target-arch }}-tar-xz
+          path: gmake---macos*.tar.xz
 
   linux-aarch64:
     needs: [check, macos]
@@ -212,9 +212,7 @@ jobs:
           run ./ppkg setup --use-system-package-manager
           run ./ppkg update
           run ./ppkg install gmake gh --link-type=static-only --install-lib=static
-          run ./ppkg pack    gmake
-
-          ls ~/.ppkg/packed/gmake-*.tar.xz > filepath.txt
+          run ./ppkg pack    gmake -o .
           EOF
 
           chmod +x run.sh
@@ -222,17 +220,113 @@ jobs:
       # https://github.com/multiarch/qemu-user-static
       - run: docker run --rm --privileged multiarch/qemu-user-static --reset -p yes
       - run: docker run -v $PWD:$PWD -w $PWD --name alpine arm64v8/alpine sh run.sh
-      - run: docker cp alpine:$(cat filepath.txt) .
 
       - run: ls
 
       - uses: actions/upload-artifact@v3
         with:
-          name: gmake-linux-aarch64-tar-xz
+          name: gmake---linux-aarch64-tar-xz
           path: gmake-*-linux-aarch64.tar.xz
 
-  linux-x86_64:
+
+  linux-ppc64le:
     needs: [check, linux-aarch64]
+    if: needs.check.outputs.if-need-to-publish-a-new-release == 'yes'
+
+    runs-on: ubuntu-latest
+
+    steps:
+      - run: |
+          cat > run.sh <<EOF
+          set -e
+
+          COLOR_GREEN='\033[0;32m'        # Green
+          COLOR_PURPLE='\033[0;35m'       # Purple
+          COLOR_OFF='\033[0m'             # Reset
+
+          echo() {
+              printf '%b\n' "\$*"
+          }
+
+          run() {
+              echo "\${COLOR_PURPLE}==>\${COLOR_OFF} \${COLOR_GREEN}\$@\${COLOR_OFF}"
+              eval "\$*"
+          }
+
+          run uname -a
+
+          run wget https://raw.githubusercontent.com/leleliu008/ppkg/master/ppkg
+          run chmod a+x ppkg
+          run ./ppkg setup --use-system-package-manager
+          run ./ppkg update
+          run ./ppkg install gmake gh --link-type=static-only --install-lib=static
+          run ./ppkg pack    gmake -o .
+          EOF
+
+          chmod +x run.sh
+
+      # https://github.com/multiarch/qemu-user-static
+      - run: docker run --rm --privileged multiarch/qemu-user-static --reset -p yes
+      - run: docker run -v $PWD:$PWD -w $PWD --name alpine ppc64le/alpine sh run.sh
+
+      - run: ls
+
+      - uses: actions/upload-artifact@v3
+        with:
+          name: gmake---linux-ppc64le-tar-xz
+          path: gmake-*-linux-ppc64le.tar.xz
+
+
+  linux-s390x:
+    needs: [check, linux-ppc64le]
+    if: needs.check.outputs.if-need-to-publish-a-new-release == 'yes'
+
+    runs-on: ubuntu-latest
+
+    steps:
+      - run: |
+          cat > run.sh <<EOF
+          set -e
+
+          COLOR_GREEN='\033[0;32m'        # Green
+          COLOR_PURPLE='\033[0;35m'       # Purple
+          COLOR_OFF='\033[0m'             # Reset
+
+          echo() {
+              printf '%b\n' "\$*"
+          }
+
+          run() {
+              echo "\${COLOR_PURPLE}==>\${COLOR_OFF} \${COLOR_GREEN}\$@\${COLOR_OFF}"
+              eval "\$*"
+          }
+
+          run uname -a
+
+          run wget https://raw.githubusercontent.com/leleliu008/ppkg/master/ppkg
+          run chmod a+x ppkg
+          run ./ppkg setup --use-system-package-manager
+          run ./ppkg update
+          run ./ppkg install gmake gh --link-type=static-only --install-lib=static
+          run ./ppkg pack    gmake -o .
+          EOF
+
+          chmod +x run.sh
+
+      # https://github.com/multiarch/qemu-user-static
+      - run: docker run --rm --privileged multiarch/qemu-user-static --reset -p yes
+      - run: docker run -v $PWD:$PWD -w $PWD --name alpine s390x/alpine sh run.sh
+
+      - run: ls
+
+      - uses: actions/upload-artifact@v3
+        with:
+          name: gmake---linux-s390x-tar-xz
+          path: gmake-*-linux-s390x.tar.xz
+
+
+  linux-x86_64:
+    needs: [check, linux-s390x]
     if: needs.check.outputs.if-need-to-publish-a-new-release == 'yes'
 
     runs-on: ubuntu-latest
@@ -265,57 +359,67 @@ jobs:
     steps:
       - uses: actions/download-artifact@v3
         with:
-          name: gmake-netbsd-amd64-tar-xz
+          name: cmake---netbsd-amd64-tar-xz
           path: .
 
       - uses: actions/download-artifact@v3
         with:
-          name: gmake-openbsd-amd64-tar-xz
+          name: cmake---openbsd-amd64-tar-xz
           path: .
 
       - uses: actions/download-artifact@v3
         with:
-          name: gmake-freebsd-amd64-tar-xz
+          name: cmake---freebsd-amd64-tar-xz
           path: .
 
       - uses: actions/download-artifact@v3
         with:
-          name: gmake-macos11.0-x86_64-tar-xz
+          name: cmake---macos11.0-x86_64-tar-xz
           path: .
 
       - uses: actions/download-artifact@v3
         with:
-          name: gmake-macos12.0-x86_64-tar-xz
+          name: cmake---macos12.0-x86_64-tar-xz
           path: .
 
       - uses: actions/download-artifact@v3
         with:
-          name: gmake-macos13.0-x86_64-tar-xz
+          name: cmake---macos13.0-x86_64-tar-xz
           path: .
 
       - uses: actions/download-artifact@v3
         with:
-          name: gmake-macos11.0-arm64-tar-xz
+          name: cmake---macos11.0-arm64-tar-xz
           path: .
 
       - uses: actions/download-artifact@v3
         with:
-          name: gmake-macos12.0-arm64-tar-xz
+          name: cmake---macos12.0-arm64-tar-xz
           path: .
 
       - uses: actions/download-artifact@v3
         with:
-          name: gmake-macos13.0-arm64-tar-xz
+          name: cmake---macos13.0-arm64-tar-xz
           path: .
 
       - uses: actions/download-artifact@v3
         with:
-          name: gmake-linux-aarch64-tar-xz
+          name: cmake---linux-aarch64-tar-xz
           path: .
 
       - uses: actions/download-artifact@v3
         with:
-          name: gmake-linux-x86_64-tar-xz
+          name: cmake---linux-ppc64le-tar-xz
+          path: .
+
+      - uses: actions/download-artifact@v3
+        with:
+          name: cmake---linux-s390x-tar-xz
+          path: .
+
+      - uses: actions/download-artifact@v3
+        with:
+          name: cmake---linux-x86_64-tar-xz
           path: .
 
       - run: ls -a

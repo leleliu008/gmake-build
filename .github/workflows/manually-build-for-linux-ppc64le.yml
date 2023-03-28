@@ -34,9 +34,7 @@ jobs:
           run ./ppkg setup --use-system-package-manager
           run ./ppkg update
           run ./ppkg install gmake --link-type=static-only --install-lib=static
-          run ./ppkg pack    gmake
-
-          ls ~/.ppkg/packed/gmake-*.tar.xz > filepath.txt
+          run ./ppkg pack    gmake -o .
           EOF
 
           chmod +x run.sh
@@ -44,7 +42,6 @@ jobs:
       # https://github.com/multiarch/qemu-user-static
       - run: docker run --rm --privileged multiarch/qemu-user-static --reset -p yes
       - run: docker run -v $PWD:$PWD -w $PWD --name alpine ppc64le/alpine sh run.sh
-      - run: docker cp alpine:$(cat filepath.txt) .
 
       - run: ls
 
